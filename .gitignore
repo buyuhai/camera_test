@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 本地测试图与导出结果（二进制图片不入库）
+samples/
+out/
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
