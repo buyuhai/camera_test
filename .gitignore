@@ -10,7 +10,7 @@ venv/
 .coverage
 htmlcov/
 
-# 本地测试图与导出结果（二进制图片不入库）
+# 本地测试图与导出结果（二进制图片默认不入库；docs/acceptance/ 验收证据图例外）
 samples/
 out/
 *.log

@@ -4,7 +4,7 @@
 
 ## 现状
 
-功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。首个 change `add-hough-circle-gui` 已归档，基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。
+功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。`add-hough-circle-gui` 与 `add-real-image-acceptance` 两个 change 已归档，基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。真实图片的验收参数、结果与证据图见「[验收参数与结果](#验收参数与结果)」。
 
 ## 环境要求
 
@@ -23,10 +23,17 @@ pip install -e . --no-deps
 
 `--system-site-packages` 让虚拟环境复用系统已装的 `cv2` 与 `PyQt5`（与 ROS 2 rqt 同源）；`--no-deps` 阻止 pip 用 PyPI wheel 覆盖这些 apt 包。`pyproject.toml` 中声明的依赖是运行时契约，供非 ROS 环境或 CI 参考。
 
-## 运行
+## 启动方式
+
+安装完成后，任选一种：
 
 ```bash
-python3 -m hough_gui     # 或激活 venv 后直接执行 hough-gui
+.venv/bin/python -m hough_gui   # 不激活 venv
+```
+
+```bash
+. .venv/bin/activate
+python3 -m hough_gui            # 或执行 hough-gui
 ```
 
 ## 使用流程
@@ -48,7 +55,37 @@ python3 -m hough_gui     # 或激活 venv 后直接执行 hough-gui
 
 调参直觉：`param2` 过小会误检、过大则漏检；`minDist` 小于目标圆间距时同一个圆会被重复检出。默认 `param2=30` 面向边缘平滑的真实图像；边缘是硬阶跃的合成图通常需要更低的 `param2`（约 15）才会检出。
 
-检出圆在 Hough 结果基础上还会做一次边缘微调：在圆心 ±5 像素、半径 0.85–1.25 倍范围内搜索圆周梯度最强的同心圆（受 `minRadius`/`maxRadius` 约束），因此半径会贴合真实外沿而不是内圈纹理。对硬币这类带齿纹、多重同心边的目标，建议把 `minRadius` 设为略小于目标半径、`param2` 提到 100 以上并加大 `minDist` 以排除内部纹理（例如两枚直径约 360 px 的硬币可用 `dp=1.0, minDist=250, param1=100, param2=150, minRadius=100, maxRadius=0`）。
+检出圆在 Hough 结果基础上还会做一次边缘微调：在圆心 ±5 像素、半径 0.85–1.25 倍范围内搜索圆周梯度最强的同心圆（受 `minRadius`/`maxRadius` 约束），因此半径会贴合真实外沿而不是内圈纹理。带齿纹或多层同心边的目标需要提高 `param2` 并用 `minRadius` 收紧半径搜索；硬币与盘子的实测参数见下节。
+
+## 验收参数与结果
+
+两张原始样图只保留在本地 `samples/`（不入库）；按下列参数在 GUI 中打开对应图片，应得到表中的结果。标注结果图保存在 `docs/acceptance/`，随仓库提交。
+
+| 参数 | 盘子 `samples/plate.png`（520×520） | 硬币 `samples/coins.jpg`（760×385） |
+|---|---:|---:|
+| `dp` | 1.0 | 1.0 |
+| `minDist` | 250 | 250 |
+| `param1` | 100 | 100 |
+| `param2` | **60** | **150** |
+| `minRadius` | **200** | **120** |
+| `maxRadius` | 0（无上限） | 0（无上限） |
+
+| 验收项 | 盘子 | 硬币 |
+|---|---|---|
+| 检出数量 | 1 | 2 |
+| 圆心（px） | (263.5, 256.5) | (192.5, 191.5)、(566.5, 191.5) |
+| 半径（px） | 243.3 | 180.0、179.5 |
+| 贴合位置 | 盘子最外沿 | 两枚硬币的外齿圈 |
+
+**盘子**：`minRadius=200` 把搜索限定在盘子外沿量级的半径，`param2=60` 已足够检出外沿并排除内部纹样与背景高对比边缘。
+
+![盘子验收结果：绿色轮廓贴合盘子最外沿](docs/acceptance/plate_result.png)
+
+**硬币**：`param2=150` 抑制硬币内部人像与花环纹理，`minRadius=120` 保留半径约 180 px 的外圈，`minDist=250` 小于两枚硬币圆心间距（约 374 px），既不会合并两枚硬币，也能排除同一硬币内部的重复圆。
+
+![硬币验收结果：两个绿色轮廓分别贴合两枚硬币外齿圈](docs/acceptance/coins_result.png)
+
+验收环境、复核命令与完整记录见 `openspec/changes/archive/2026-11-15-add-real-image-acceptance/acceptance.md`。
 
 ## 功能与非功能约束
 
@@ -72,12 +109,20 @@ camera_test/
 ├── .gitignore
 ├── README.md
 ├── pyproject.toml                      # 打包、依赖、pytest 配置、hough-gui 入口
+├── docs/
+│   └── acceptance/                     # 验收证据图（入库）
+│       ├── plate_result.png
+│       └── coins_result.png
+├── samples/                            # 本地验收原图（不入库）
+│   ├── plate.png
+│   └── coins.jpg
 ├── openspec/
 │   ├── config.yaml                     # schema + 项目上下文（Agent 每次读取的约束）
 │   ├── specs/                          # 基线规格：image-io / circle-detection / detection-workbench
 │   └── changes/
 │       └── archive/
-│           └── 2026-11-15-add-hough-circle-gui/   # 已归档的首个 change
+│           ├── 2026-11-15-add-hough-circle-gui/       # 首个 change：GUI 实现
+│           └── 2026-11-15-add-real-image-acceptance/  # 真实图片验收与证据
 ├── src/hough_gui/
 │   ├── __init__.py
 │   ├── __main__.py                     # python3 -m hough_gui
@@ -120,7 +165,7 @@ camera_test/
 .venv/bin/python -m pytest
 ```
 
-pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，因此用 `python -m pytest`。用例图像由 cv2 合成（`lineType=cv2.LINE_AA`），不提交二进制图片。
+pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，因此用 `python -m pytest`。用例图像由 cv2 合成（`lineType=cv2.LINE_AA`），不提交二进制图片；`docs/acceptance/` 下的验收证据图是唯一例外。
 
 ## Git 约定
 
@@ -134,6 +179,7 @@ pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，�
 - `openspec/**`（`config.yaml`、`specs/`、`changes/`）
 - `.agents/skills/**`（OpenSpec 生成的技能，保证 Agent 行为可复现）
 - `src/**`、`tests/**`
+- `docs/acceptance/*.png`（验收证据图，供 README 直接引用）
 
 不纳入：
 
@@ -142,7 +188,7 @@ pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，�
 - `samples/`、`out/`、`*.log`（本地测试图与导出结果）
 - `.vscode/`、`.idea/`、`.DS_Store`（编辑器）
 
-理由：可复现的配置与规格入库，环境、缓存、二进制图片不入库。
+理由：可复现的配置、规格与验收证据入库；环境、缓存、原始测试图与临时导出不入库。
 
 ## 常见问题
 

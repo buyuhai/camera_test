@@ -10,7 +10,8 @@ context: |
   `python3 -m venv --system-site-packages` 创建，复用 apt 的 python3-opencv 与
   python3-pyqt5；禁止在 .venv 内安装 opencv-python / PyQt5 wheel（会遮蔽 ROS 依赖）。
   包布局：src 布局，导入名 hough_gui；入口 `python3 -m hough_gui`。
-  测试：pytest；用合成图像（cv2 画圆）生成用例数据，不提交二进制图片。
+  测试：pytest；用合成图像（cv2 画圆）生成用例数据。二进制图片默认不提交；
+  `docs/acceptance/` 下的验收证据图例外。
   UI 约束：图像一律渲染在 Qt 控件里，不使用 cv2.imshow。
   文件读写必须支持中文路径：用 np.fromfile + cv2.imdecode / cv2.imencode + tofile，
   不使用 cv2.imread / cv2.imwrite。
