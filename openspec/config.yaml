@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  Language: zh
+  All artifacts must be written in zh.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  技术栈：Python 3.12 + PyQt5 5.15 + OpenCV 4.6（cv2.HoughCircles）+ NumPy。
+  运行环境：Ubuntu 24.04 / ROS 2 Jazzy，PEP 668 外部托管。.venv 用
+  `python3 -m venv --system-site-packages` 创建，复用 apt 的 python3-opencv 与
+  python3-pyqt5；禁止在 .venv 内安装 opencv-python / PyQt5 wheel（会遮蔽 ROS 依赖）。
+  包布局：src 布局，导入名 hough_gui；入口 `python3 -m hough_gui`。
+  测试：pytest；用合成图像（cv2 画圆）生成用例数据，不提交二进制图片。
+  UI 约束：图像一律渲染在 Qt 控件里，不使用 cv2.imshow。
+  文件读写必须支持中文路径：用 np.fromfile + cv2.imdecode / cv2.imencode + tofile，
+  不使用 cv2.imread / cv2.imwrite。
+  检测逻辑与 Qt 无关，放在 hough_gui/core/ 下，可无界面单测。
+  提交信息格式 `<type>: <short description>`，type ∈ feat|fix|refactor|docs|chore|test|build。
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
