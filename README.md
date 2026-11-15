@@ -48,6 +48,8 @@ python3 -m hough_gui     # 或激活 venv 后直接执行 hough-gui
 
 调参直觉：`param2` 过小会误检、过大则漏检；`minDist` 小于目标圆间距时同一个圆会被重复检出。默认 `param2=30` 面向边缘平滑的真实图像；边缘是硬阶跃的合成图通常需要更低的 `param2`（约 15）才会检出。
 
+检出圆在 Hough 结果基础上还会做一次边缘微调：在圆心 ±5 像素、半径 0.85–1.25 倍范围内搜索圆周梯度最强的同心圆（受 `minRadius`/`maxRadius` 约束），因此半径会贴合真实外沿而不是内圈纹理。对硬币这类带齿纹、多重同心边的目标，建议把 `minRadius` 设为略小于目标半径、`param2` 提到 100 以上并加大 `minDist` 以排除内部纹理（例如两枚直径约 360 px 的硬币可用 `dp=1.0, minDist=250, param1=100, param2=150, minRadius=100, maxRadius=0`）。
+
 ## 功能与非功能约束
 
 - 导入图片：PNG / JPEG / BMP / TIFF，中文路径可用
