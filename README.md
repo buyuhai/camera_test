@@ -4,7 +4,7 @@
 
 ## 现状
 
-功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。change `add-hough-circle-gui` 尚未归档；归档后 `openspec/specs/` 才会生成基线规格。
+功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。首个 change `add-hough-circle-gui` 已归档，基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。
 
 ## 环境要求
 
@@ -72,10 +72,10 @@ camera_test/
 ├── pyproject.toml                      # 打包、依赖、pytest 配置、hough-gui 入口
 ├── openspec/
 │   ├── config.yaml                     # schema + 项目上下文（Agent 每次读取的约束）
-│   ├── specs/                          # 基线规格（归档 change 后生成）
+│   ├── specs/                          # 基线规格：image-io / circle-detection / detection-workbench
 │   └── changes/
-│       ├── add-hough-circle-gui/       # 本 change 的 proposal / specs / design / tasks
 │       └── archive/
+│           └── 2026-11-15-add-hough-circle-gui/   # 已归档的首个 change
 ├── src/hough_gui/
 │   ├── __init__.py
 │   ├── __main__.py                     # python3 -m hough_gui
