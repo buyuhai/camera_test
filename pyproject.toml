@@ -14,6 +14,9 @@ dependencies = [
     "PyQt5>=5.15",
 ]
 
+[project.scripts]
+hough-gui = "hough_gui.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

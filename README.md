@@ -4,7 +4,7 @@
 
 ## 现状
 
-本仓库当前**仅含脚手架**：Python 打包配置、Git 约定与 OpenSpec 工作流（`openspec/`、`.agents/skills/`）。GUI 与检测逻辑尚未实现，将由首个 OpenSpec change 落地——`src/hough_gui/`、`tests/` 到那时才出现，入口 `python3 -m hough_gui` 目前不可用。
+功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。change `add-hough-circle-gui` 尚未归档；归档后 `openspec/specs/` 才会生成基线规格。
 
 ## 环境要求
 
@@ -16,62 +16,79 @@
 ## 安装
 
 ```bash
-# 1. 虚拟环境（现在即可创建）
 python3 -m venv --system-site-packages .venv
 . .venv/bin/activate
-
-# 2. 可编辑安装（首个 change 创建 src/hough_gui/ 后执行；此前因 src/ 不存在会报错）
 pip install -e . --no-deps
 ```
 
 `--system-site-packages` 让虚拟环境复用系统已装的 `cv2` 与 `PyQt5`（与 ROS 2 rqt 同源）；`--no-deps` 阻止 pip 用 PyPI wheel 覆盖这些 apt 包。`pyproject.toml` 中声明的依赖是运行时契约，供非 ROS 环境或 CI 参考。
 
-## 目标功能（尚未实现）
+## 运行
 
-- **导入图片**：PNG / JPEG / BMP / TIFF，支持中文路径
-- **调参预览**：参数变化后重跑检测，在原图上叠加圆轮廓与圆心
-- **结果统计**：显示检出圆数量与检测耗时
-- **导出标注图**：把叠加结果另存为 PNG
+```bash
+python3 -m hough_gui     # 或激活 venv 后直接执行 hough-gui
+```
 
-非功能约束：
+## 使用流程
+
+1. 「打开图片」选择 PNG / JPEG / BMP / TIFF 文件；加载成功后立即按当前参数检测一次。
+2. 在左侧调整 `dp`、`minDist`、`param1`、`param2`、`minRadius`、`maxRadius`；数值变化约 150 ms 后自动重检并刷新预览。
+3. 「导出标注图」保存为 PNG，像素尺寸与原图一致。
+
+## 参数说明
+
+| 参数 | 含义 | 范围 | 默认 |
+|---|---|---|---|
+| `dp` | 累加器分辨率与图像分辨率之比 | 1.0–3.0 | 1.0 |
+| `minDist` | 圆心最小间距（像素） | 1–2000 | 50 |
+| `param1` | Canny 高阈值（低阈值取其一半） | 1–500 | 100 |
+| `param2` | 圆心累加器阈值，越小检出越多 | 1–200 | 30 |
+| `minRadius` | 最小半径（像素） | 0–2000 | 0 |
+| `maxRadius` | 最大半径（像素），**0 表示无上限** | 0–2000 | 0 |
+
+调参直觉：`param2` 过小会误检、过大则漏检；`minDist` 小于目标圆间距时同一个圆会被重复检出。默认 `param2=30` 面向边缘平滑的真实图像；边缘是硬阶跃的合成图通常需要更低的 `param2`（约 15）才会检出。
+
+## 功能与非功能约束
+
+- 导入图片：PNG / JPEG / BMP / TIFF，中文路径可用
+- 调参预览：参数变化后重跑检测，在原图上叠加绿色轮廓与红色圆心
+- 结果统计：状态栏显示 `圆: <数量> | 耗时: <毫秒> ms`
+- 导出标注图：原分辨率 PNG；写入失败不破坏既有同名文件
+
+约束：
 
 - 文件读写支持中文路径：`np.fromfile` + `cv2.imdecode` / `cv2.imencode` + `tofile`，不用 `cv2.imread` / `cv2.imwrite`
 - 图像一律渲染在 Qt 控件中，不使用 `cv2.imshow`
 - 检测逻辑与 Qt 解耦（`hough_gui/core/`），可无界面单测
-
-## 参数说明
-
-初始值取 OpenCV 4.6 语义，最终以实现为准。
-
-| 参数 | 含义 | 建议范围 | OpenCV 默认 |
-|---|---|---|---|
-| `dp` | 累加器分辨率与图像分辨率之比 | 1.0–2.0 | 1.0 |
-| `minDist` | 圆心最小间距（像素） | 10–图像短边/4 | 必填 |
-| `param1` | Canny 高阈值（低阈值取其一半） | 50–200 | 100 |
-| `param2` | 圆心累加器阈值，越小检出越多 | 10–100 | 100 |
-| `minRadius` | 最小半径（像素） | 0–短边/4 | 0 |
-| `maxRadius` | 最大半径（像素） | 0 或 > `minRadius` | 0 |
-
-调参直觉：`param2` 过小会误检、过大则漏检；`minDist` 小于目标圆间距时，同一个圆会被重复检出。
+- 检测在后台线程执行；同一时刻只有一个检测线程，改动期间的新请求在其结束后按最新参数补跑
 
 ## 目录结构
 
 ```text
 camera_test/
-├── .agents/skills/                # openspec init 生成（oh-my-pi 技能，随仓库入库）
+├── .agents/skills/                     # openspec init 生成的技能
 ├── .gitignore
 ├── README.md
-├── pyproject.toml
+├── pyproject.toml                      # 打包、依赖、pytest 配置、hough-gui 入口
 ├── openspec/
-│   ├── config.yaml                # schema + 项目上下文（Agent 每次读取的约束）
-│   ├── specs/                     # 基线能力规格（首个 change 归档后出现）
-│   └── changes/                   # 变更提案；archive/ 存已归档变更
-├── src/hough_gui/                 # 待首个 change 创建
-│   ├── __main__.py
-│   ├── core/detector.py
-│   ├── core/imageio.py
-│   └── ui/main_window.py
-└── tests/                         # 待首个 change 创建
+│   ├── config.yaml                     # schema + 项目上下文（Agent 每次读取的约束）
+│   ├── specs/                          # 基线规格（归档 change 后生成）
+│   └── changes/
+│       ├── add-hough-circle-gui/       # 本 change 的 proposal / specs / design / tasks
+│       └── archive/
+├── src/hough_gui/
+│   ├── __init__.py
+│   ├── __main__.py                     # python3 -m hough_gui
+│   ├── core/
+│   │   ├── params.py                   # HoughParams + 参数校验
+│   │   ├── detector.py                 # detect_circles，无 Qt 依赖
+│   │   └── imageio.py                  # 中文路径读写、叠加渲染、原子导出
+│   └── ui/
+│       └── main_window.py              # MainWindow 与 DetectThread
+└── tests/
+    ├── test_params.py
+    ├── test_detector.py
+    └── test_imageio.py
 ```
 
 ## 开发流程（OpenSpec）
@@ -98,10 +115,10 @@ camera_test/
 ## 测试
 
 ```bash
-pytest
+.venv/bin/python -m pytest
 ```
 
-测试配置在 `pyproject.toml`（`testpaths = ["tests"]`）。用例图像由 cv2 合成（画圆），不提交二进制图片。
+pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，因此用 `python -m pytest`。用例图像由 cv2 合成（`lineType=cv2.LINE_AA`），不提交二进制图片。
 
 ## Git 约定
 
@@ -114,7 +131,7 @@ pytest
 - `pyproject.toml`、`README.md`、`.gitignore`
 - `openspec/**`（`config.yaml`、`specs/`、`changes/`）
 - `.agents/skills/**`（OpenSpec 生成的技能，保证 Agent 行为可复现）
-- `src/**`、`tests/**`（首个 change 起出现）
+- `src/**`、`tests/**`
 
 不纳入：
 
@@ -130,3 +147,4 @@ pytest
 - **Qt 起不来 / `xcb` 插件加载失败**：WSL2 需 WSLg，确认 `echo $DISPLAY` 非空，必要时执行 `wsl --update`。
 - **中文路径读不出图**：`cv2.imread` / `cv2.imwrite` 对非 ASCII 路径不可靠，统一走 `np.fromfile` + `cv2.imdecode` 与 `cv2.imencode` + `tofile`。
 - **venv 里装了 PyQt5 wheel，与 rqt 冲突**：`pip uninstall PyQt5`，用 `--system-site-packages` 重建 venv，复用系统包。
+- **参数面板出现红字**：参数组合非法（如 `minRadius` 大于非零的 `maxRadius`），此时不会发起检测，预览保留上次结果。
