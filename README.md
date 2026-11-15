@@ -145,6 +145,8 @@ pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，�
 ## 常见问题
 
 - **Qt 起不来 / `xcb` 插件加载失败**：WSL2 需 WSLg，确认 `echo $DISPLAY` 非空，必要时执行 `wsl --update`。
+- **界面中文显示为方框（乱码）**：系统缺少中文字体，WSL2 上新装的发行版常见。启动时若检测不到简体中文字体，程序会按 `msyh.ttc` → `NotoSansSC-VF.ttf` → `simsun.ttc` → `Deng.ttf` 的顺序从 `/mnt/c/Windows/Fonts/` 加载宿主 Windows 字体并设为应用字体；如宿主字体也不可用，执行 `sudo apt install fonts-noto-cjk`。
+- **窗口标题是英文**：WSLg 的标题栏由 Weston 绘制，不经过 Qt 字体回退，装中文字体也无法显示中文，因此标题固定为 `Hough Circle Detection`，界面内文字仍为中文。
 - **中文路径读不出图**：`cv2.imread` / `cv2.imwrite` 对非 ASCII 路径不可靠，统一走 `np.fromfile` + `cv2.imdecode` 与 `cv2.imencode` + `tofile`。
 - **venv 里装了 PyQt5 wheel，与 rqt 冲突**：`pip uninstall PyQt5`，用 `--system-site-packages` 重建 venv，复用系统包。
 - **参数面板出现红字**：参数组合非法（如 `minRadius` 大于非零的 `maxRadius`），此时不会发起检测，预览保留上次结果。

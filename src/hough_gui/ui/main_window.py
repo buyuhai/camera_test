@@ -64,7 +64,8 @@ def _double_spin(minimum: float, maximum: float, step: float, decimals: int) -> 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("霍夫圆检测")
+        # WSLg 的标题栏由 Weston 绘制，不支持中文字形，中文标题会显示为方框，故标题用英文。
+        self.setWindowTitle("Hough Circle Detection")
         self.resize(1100, 720)
 
         self._image = None
