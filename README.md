@@ -4,7 +4,9 @@
 
 ## 现状
 
-功能已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。`add-hough-circle-gui` 与 `add-real-image-acceptance` 两个 change 已归档，基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。真实图片的验收参数、结果与证据图见「[验收参数与结果](#验收参数与结果)」。
+图片模式已实现：导入图片、六参数调参、参数变化自动重检、叠加预览、状态栏数量与耗时、导出原分辨率标注图。`add-hough-circle-gui` 与 `add-real-image-acceptance` 两个 change 已归档，基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。真实图片的验收参数、结果与证据图见「[验收参数与结果](#验收参数与结果)」。
+
+视频模式（导入视频并逐帧检测）已完成规划但未实现，规划与交接记录见 `openspec/changes/add-video-detection-input/`；当前完成度、未验证事项和后续待办见该目录的 `handover.md`。
 
 ## 环境要求
 
@@ -87,6 +89,20 @@ python3 -m hough_gui            # 或执行 hough-gui
 
 验收环境、复核命令与完整记录见 `openspec/changes/archive/2026-11-15-add-real-image-acceptance/acceptance.md`。
 
+## 样例获取
+
+`samples/` 被 `.gitignore` 排除，不随仓库分发。两类样例的处理方式不同：
+
+- **自动化测试**：不依赖 `samples/`。测试用 `cv2` 现场合成黑底白圆图像，按 README 的测试命令即可复现。
+- **真实图片验收**：需要自行取得下列原图，按表中尺寸缩放/裁剪后放到 `samples/`。许可与署名如下。
+
+| 本地文件 | 来源与许可 | 处理 |
+|---|---|---|
+| `samples/coins.jpg` | Jaclyn Nash / Smithsonian Institution, National Numismatic Collection, [1865 Three-Cent Nickel](https://commons.wikimedia.org/wiki/File:NNC-US-1865-3C-Three-Cent,_Nickel.jpg)，Wikimedia Commons 标注为美国公有领域 | 两枚硬币并排，缩放到 760×385 |
+| `samples/plate.png` | Helen Alfvegren，[Plate of Three Types of Cookies](https://commons.wikimedia.org/wiki/File:Plate_of_Three_Types_of_Cookies.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | 缩放到 520×520 |
+
+如果使用不同裁剪或缩放版本，圆心与半径可能相差几个像素；验收数值以 README 上表和 `docs/acceptance/` 的证据图为参考。视频模式尚未实现，样例视频的获取方式会在实现时补充到本节。
+
 ## 功能与非功能约束
 
 - 导入图片：PNG / JPEG / BMP / TIFF，中文路径可用
@@ -120,6 +136,7 @@ camera_test/
 │   ├── config.yaml                     # schema + 项目上下文（Agent 每次读取的约束）
 │   ├── specs/                          # 基线规格：image-io / circle-detection / detection-workbench
 │   └── changes/
+│       ├── add-video-detection-input/  # 视频导入逐帧检测：规划、任务与交接记录
 │       └── archive/
 │           ├── 2026-11-15-add-hough-circle-gui/       # 首个 change：GUI 实现
 │           └── 2026-11-15-add-real-image-acceptance/  # 真实图片验收与证据
