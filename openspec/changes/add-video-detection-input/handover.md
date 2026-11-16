@@ -14,6 +14,7 @@ Issue：[#1 支持导入视频并逐帧检测](https://github.com/buyuhai/camera
 - 基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。
 - 真实图片验收通过：盘子 1 个圆（圆心约 `(263.5, 256.5)`，半径约 `243.3 px`），硬币 2 个圆（半径约 `180.0/179.5 px`），证据图在 `docs/acceptance/`；输入图已随分支提交到 `docs/acceptance/inputs/`，README 的无界面复核命令可直接离线运行。
 - 自动化测试：`.venv/bin/python -m pytest` 共 21 个用例通过。
+- 交接复核：2026-11-16 从远端分支全新 clone，按 README 创建 `--system-site-packages` venv、执行 `pip install -e . --no-deps`，pytest 与无界面验收命令输出均与 README 预期一致。
 - 本次视频变更只完成规划：`proposal.md`、`specs/`、`design.md`、`tasks.md` 已就绪，代码未改动。
 
 ## 环境快照
