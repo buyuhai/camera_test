@@ -61,9 +61,9 @@ python3 -m hough_gui            # 或执行 hough-gui
 
 ## 验收参数与结果
 
-两张原始样图只保留在本地 `samples/`（不入库）；按下列参数在 GUI 中打开对应图片，应得到表中的结果。标注结果图保存在 `docs/acceptance/`，随仓库提交。
+两张验收输入图已提交在 `docs/acceptance/inputs/`；按下列参数在 GUI 中打开对应图片，应得到表中的结果。标注结果图保存在 `docs/acceptance/`，随仓库提交。
 
-| 参数 | 盘子 `samples/plate.png`（520×520） | 硬币 `samples/coins.jpg`（760×385） |
+| 参数 | 盘子 `docs/acceptance/inputs/plate.png`（520×520） | 硬币 `docs/acceptance/inputs/coins.jpg`（760×385） |
 |---|---:|---:|
 | `dp` | 1.0 | 1.0 |
 | `minDist` | 250 | 250 |
@@ -87,21 +87,51 @@ python3 -m hough_gui            # 或执行 hough-gui
 
 ![硬币验收结果：两个绿色轮廓分别贴合两枚硬币外齿圈](docs/acceptance/coins_result.png)
 
-验收环境、复核命令与完整记录见 `openspec/changes/archive/2026-11-15-add-real-image-acceptance/acceptance.md`。
+无界面复核（在仓库根目录运行，不需要启动 GUI）：
+
+```bash
+.venv/bin/python - <<'PY'
+from hough_gui.core.detector import detect_circles
+from hough_gui.core.imageio import load_image
+from hough_gui.core.params import HoughParams
+
+cases = [
+    ("plate", "docs/acceptance/inputs/plate.png",
+     HoughParams(dp=1.0, min_dist=250, param1=100, param2=60,
+                 min_radius=200, max_radius=0)),
+    ("coins", "docs/acceptance/inputs/coins.jpg",
+     HoughParams(dp=1.0, min_dist=250, param1=100, param2=150,
+                 min_radius=120, max_radius=0)),
+]
+for name, path, params in cases:
+    circles = detect_circles(load_image(path), params)
+    print(name, len(circles),
+          [(round(c.x, 1), round(c.y, 1), round(c.r, 1)) for c in circles])
+PY
+```
+
+预期输出：
+
+```text
+plate 1 [(263.5, 256.5, 243.3)]
+coins 2 [(192.5, 191.5, 180.0), (566.5, 191.5, 179.5)]
+```
+
+验收环境与完整记录见 `openspec/changes/archive/2026-11-15-add-real-image-acceptance/acceptance.md`。
 
 ## 样例获取
 
-`samples/` 被 `.gitignore` 排除，不随仓库分发。两类样例的处理方式不同：
+验收输入图已提交在 `docs/acceptance/inputs/`，克隆仓库后即可离线复现；根目录 `samples/` 仍被 `.gitignore` 排除，只是本地工作副本。如需从原始来源重建，按下表处理：
 
-- **自动化测试**：不依赖 `samples/`。测试用 `cv2` 现场合成黑底白圆图像，按 README 的测试命令即可复现。
-- **真实图片验收**：需要自行取得下列原图，按表中尺寸缩放/裁剪后放到 `samples/`。许可与署名如下。
+- **自动化测试**：不依赖这些图片。测试用 `cv2` 现场合成黑底白圆图像，按 README 的测试命令即可复现。
+- **真实图片验收**：使用 `docs/acceptance/inputs/` 中的输入图；来源、许可和 SHA-256 见该目录的 `README.md`。下表的来源信息供追溯和再分发使用。
 
-| 本地文件 | 来源与许可 | 处理 |
+| 提交文件 | 来源与许可 | 处理 |
 |---|---|---|
-| `samples/coins.jpg` | Jaclyn Nash / Smithsonian Institution, National Numismatic Collection, [1865 Three-Cent Nickel](https://commons.wikimedia.org/wiki/File:NNC-US-1865-3C-Three-Cent,_Nickel.jpg)，Wikimedia Commons 标注为美国公有领域 | 两枚硬币并排，缩放到 760×385 |
-| `samples/plate.png` | Helen Alfvegren，[Plate of Three Types of Cookies](https://commons.wikimedia.org/wiki/File:Plate_of_Three_Types_of_Cookies.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | 缩放到 520×520 |
+| `docs/acceptance/inputs/coins.jpg` | Jaclyn Nash / Smithsonian Institution, National Numismatic Collection, [1865 Three-Cent Nickel](https://commons.wikimedia.org/wiki/File:NNC-US-1865-3C-Three-Cent,_Nickel.jpg)，Wikimedia Commons 标注为美国公有领域 | 两枚硬币并排，缩放到 760×385 |
+| `docs/acceptance/inputs/plate.png` | Helen Alfvegren，[Plate of Three Types of Cookies](https://commons.wikimedia.org/wiki/File:Plate_of_Three_Types_of_Cookies.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | 缩放到 520×520 |
 
-如果使用不同裁剪或缩放版本，圆心与半径可能相差几个像素；验收数值以 README 上表和 `docs/acceptance/` 的证据图为参考。视频模式尚未实现，样例视频的获取方式会在实现时补充到本节。
+如果从原始来源重新裁剪或缩放，圆心与半径可能相差几个像素；以提交在 `docs/acceptance/inputs/` 的文件为准。视频模式尚未实现，样例视频的获取方式会在实现时补充到本节。
 
 ## 功能与非功能约束
 
@@ -126,10 +156,11 @@ camera_test/
 ├── README.md
 ├── pyproject.toml                      # 打包、依赖、pytest 配置、hough-gui 入口
 ├── docs/
-│   └── acceptance/                     # 验收证据图（入库）
+│   └── acceptance/                     # 验收输入与证据图（入库）
+│       ├── inputs/                     # 验收输入图及来源说明
 │       ├── plate_result.png
 │       └── coins_result.png
-├── samples/                            # 本地验收原图（不入库）
+├── samples/                            # 本地工作副本（不入库，与 inputs/ 一致）
 │   ├── plate.png
 │   └── coins.jpg
 ├── openspec/
@@ -182,11 +213,11 @@ camera_test/
 .venv/bin/python -m pytest
 ```
 
-pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，因此用 `python -m pytest`。用例图像由 cv2 合成（`lineType=cv2.LINE_AA`），不提交二进制图片；`docs/acceptance/` 下的验收证据图是唯一例外。
+pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，因此用 `python -m pytest`。用例图像由 cv2 合成（`lineType=cv2.LINE_AA`），不依赖二进制图片；`docs/acceptance/inputs/` 的验收输入图与 `docs/acceptance/` 的结果图是提交例外。
 
 ## Git 约定
 
-提交信息 `<type>: <short description>`，`type` ∈ `feat | fix | refactor | docs | chore | test | build`，描述用简短英文，例如 `feat: add hough circle detector core`。当前为单分支 `main`、单开发者直接提交。
+提交信息 `<type>: <short description>`，`type` ∈ `feat | fix | refactor | docs | chore | test | build`，描述用简短英文，例如 `feat: add hough circle detector core`。工作分支使用 `feat/<Issue编号>-<英文短语>` 或 `fix/<Issue编号>-<英文短语>`；当前视频规划分支为 `feat/1-video-import-detection`，对应 Issue #1。
 
 ## 纳入 / 不纳入版本库
 
@@ -196,13 +227,13 @@ pytest 来自 apt 包，venv 只暴露其模块、没有 `.venv/bin/pytest`，�
 - `openspec/**`（`config.yaml`、`specs/`、`changes/`）
 - `.agents/skills/**`（OpenSpec 生成的技能，保证 Agent 行为可复现）
 - `src/**`、`tests/**`
-- `docs/acceptance/*.png`（验收证据图，供 README 直接引用）
+- `docs/acceptance/**`（验收输入图、证据图与来源说明，供 README 直接引用）
 
 不纳入：
 
 - `.venv/`（本机虚拟环境）
 - `__pycache__/`、`*.egg-info/`、`.pytest_cache/`、`build/`、`dist/`（构建与缓存产物）
-- `samples/`、`out/`、`*.log`（本地测试图与导出结果）
+- `samples/`、`out/`、`*.log`（本地工作副本与导出结果；`samples/` 内容与 `docs/acceptance/inputs/` 一致）
 - `.vscode/`、`.idea/`、`.DS_Store`（编辑器）
 
 理由：可复现的配置、规格与验收证据入库；环境、缓存、原始测试图与临时导出不入库。

@@ -12,7 +12,7 @@ Issue：[#1 支持导入视频并逐帧检测](https://github.com/buyuhai/camera
   - `add-hough-circle-gui`：14/14
   - `add-real-image-acceptance`：8/8
 - 基线规格位于 `openspec/specs/{image-io,circle-detection,detection-workbench}/spec.md`。
-- 真实图片验收通过：盘子 1 个圆（圆心约 `(263.5, 256.5)`，半径约 `243.3 px`），硬币 2 个圆（半径约 `180.0/179.5 px`），证据图在 `docs/acceptance/`。
+- 真实图片验收通过：盘子 1 个圆（圆心约 `(263.5, 256.5)`，半径约 `243.3 px`），硬币 2 个圆（半径约 `180.0/179.5 px`），证据图在 `docs/acceptance/`；输入图已随分支提交到 `docs/acceptance/inputs/`，README 的无界面复核命令可直接离线运行。
 - 自动化测试：`.venv/bin/python -m pytest` 共 21 个用例通过。
 - 本次视频变更只完成规划：`proposal.md`、`specs/`、`design.md`、`tasks.md` 已就绪，代码未改动。
 
@@ -33,7 +33,7 @@ Issue：[#1 支持导入视频并逐帧检测](https://github.com/buyuhai/camera
 - 视频播放性能未验证：检测速度低于视频帧率时的跳帧表现、内存占用和界面响应都还没有实测数据。
 - GUI 交互仍以手工验收为主：暂停/继续/停止、窗口缩放、导出对话框没有自动化 UI 测试。
 - WSLg 标题栏由 Weston 绘制，中文标题会显示为方框，因此窗口标题固定为英文；界面字体依赖宿主 Windows 字体或 `fonts-noto-cjk`。
-- 原始样图 `samples/plate.png`、`samples/coins.jpg` 不入库，需要按 README 的「样例获取」重新取得。
+- 根目录 `samples/` 不入库，但同一内容的验收输入图已提交在 `docs/acceptance/inputs/`；README 的复核命令使用提交路径，不依赖本地 `samples/`。
 - 仓库没有 CI，交付前需手工运行 pytest 与 `openspec validate --strict`。
 
 ## 后续待办
